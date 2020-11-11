@@ -1,6 +1,13 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+
+
+
+def normarlization(data,maxrange):
+    data1 = data/maxrange
+    return data1
+
 class env(object):
     def __init__(self, UE_num, env_radius, max_mov_distance_per):
         self.UE_num = UE_num
@@ -18,7 +25,7 @@ class env(object):
 
         self.com_traffic =[]
         self.succeed_trans_UE=[]   #完成传输的用户
-        self.uav_speed = 300
+        self.uav_speed = 3
         self.state_dim = self.UE_num * 2    #状态空间的大小
         self.action_dim = 1             #动作空间的大小
         self.action_bound = 180         #动作范围
@@ -29,7 +36,7 @@ class env(object):
         UE_pos = UE_pos[UE_index][0]
         self.UE_pos = np.append(UE_pos, 0)
         #---------------------------------
-        self.UAV_pos = [-self.env_radius, 0, 3]
+        self.UAV_pos =[0,0,3]                                      #[-self.env_radius, 0, 3]
         self.UAV_pos_buffer = np.array(self.UAV_pos)
         self.UAV_pos_buffer = np.vstack((self.UAV_pos_buffer,self.UAV_pos))
         s = self.UE_pos - self.UAV_pos
@@ -38,6 +45,7 @@ class env(object):
         for i in s:
             s1 = np.hstack((s1, i.tolist()))
         s = s1
+        s = normarlization(s, 2 * self.env_radius)
         return s
 
     def calc_rate(self,dis):
@@ -63,12 +71,9 @@ class env(object):
         self.rx_power = 10 ** ((self.UE_tx_power - self.chan_loss + self.UAV_rx_gain) / 10)
         self.rx_power = self.rx_power.reshape(1, -1)
         self.rx_power_stack = np.vstack((self.rx_power_stack, self.rx_power))
-        printer = False
+        printer = True
         if printer:
             print('dis is', dis)
-            print('path loss is ', self.path_loss)
-            print('rx_power is', self.rx_power)
-            print('chan loss is',self.chan_loss)
         if self.rx_power_stack.shape[0] > 10:
             self.rx_power_stack = np.delete(self.rx_power_stack, 0, 0)
         # -----------------------------------------------------------------------
@@ -78,9 +83,12 @@ class env(object):
         # print('rate is',rate)
         self.com_traffic = rate * self.timslot  # 单个时隙内的通信流量
         #-------------------------------------------------------
-        self.env_action(a)
-        r=self.com_traffic[0][0] * 10000
+        angle = a*90
+        self.env_action(angle)
+        r= self.com_traffic[0][0] * 10000
+        print('reward is',r)
         s_,_ = self.env_state()
+        print('s_ is',s_)
         done = 0
         if r >50000:
             done = 1
@@ -91,6 +99,7 @@ class env(object):
         s = self.UE_pos - self.UAV_pos
         s = s[:2]
         done = 0
+        s = normarlization(s,2*self.env_radius)
         return s,done
 
     def env_action(self,angle):
@@ -106,6 +115,7 @@ class env(object):
             self.UAV_pos = UAV_pos
         self.UAV_pos_buffer = np.vstack((self.UAV_pos_buffer,np.array(self.UAV_pos)))
         # print(self.UAV_pos_buffer)
+
 
     def env_reward(self):
         rate_threshold = 5

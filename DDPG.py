@@ -12,7 +12,7 @@ tf.set_random_seed(1)
 
 #####################  hyper parameters  ####################
 
-MAX_EPISODES = 300
+MAX_EPISODES = 5000
 MAX_EP_STEPS = 200
 LR_A = 0.001    # learning rate for actor
 LR_C = 0.001    # learning rate for critic
@@ -188,7 +188,7 @@ env = env(UE_num=1,env_radius=800,max_mov_distance_per=1)
 state_dim = 2
 
 action_dim = 1
-action_bound = 180
+action_bound = 2
 
 # all placeholder for tf
 with tf.name_scope('S'):
@@ -214,7 +214,7 @@ M = Memory(MEMORY_CAPACITY, dims=2 * state_dim + action_dim + 1)
 if OUTPUT_GRAPH:
     tf.summary.FileWriter("logs/", sess.graph)
 
-var = 300  # control exploration
+var = 3  # control exploration
 
 t1 = time.time()
 for i in range(MAX_EPISODES):
@@ -223,15 +223,21 @@ for i in range(MAX_EPISODES):
     j = 0
     done = 0
     for j in range(MAX_EP_STEPS):
-        j += 1
         # if RENDER:
             # env.render()
         # Add exploration noise
-        a = actor.choose_action(s)
-        print('a output is ',a)
-        a = np.clip(np.random.normal(a, var), -180, 180)    # add randomness to action selection for exploration
-        print(a)
+        if i >3000:
+            print('神经网络输出')
+            a = actor.choose_action(s)
+            print('network output is',a)
+            a = np.clip(np.random.normal(a, var), -2, 2)  # add randomness to action selection for exploration
+        else:
+            a = np.random.uniform(-2,2)
+        print('action is ',a)
+        # else:
+        #     a = np.random.uniform(-2,2)
         s_, r, done = env.step(a)
+        print('reward is',r)
         # if j%100 == 0:
         #     print('s_',s_)
         #     print('r',r)
