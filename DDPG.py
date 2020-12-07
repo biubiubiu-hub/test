@@ -9,7 +9,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 tf.disable_v2_behavior()
 np.random.seed(1)
 tf.set_random_seed(1)
-
+###2222
 #####################  hyper parameters  ####################
 
 MAX_EPISODES = 5000
@@ -226,7 +226,7 @@ for i in range(MAX_EPISODES):
         # if RENDER:
             # env.render()
         # Add exploration noise
-        if i >3000:
+        if i >30:
             print('神经网络输出')
             a = actor.choose_action(s)
             print('network output is',a)
